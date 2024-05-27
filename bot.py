@@ -4,7 +4,6 @@ import os
 
 API_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 bot = telebot.TeleBot(API_TOKEN)
-
 L = instaloader.Instaloader()
 
 def download_instagram_post(url):
@@ -16,13 +15,13 @@ def download_instagram_post(url):
         L.download_post(post, target=download_path)
         files = os.listdir(download_path)
         if files:
-            return f"تم تحميل البوست من المستخدم {post.owner_username}.\nالمحتوى:\n" + "\n".join(files)
+            return download_path, files
         else:
-            return f"تم تحميل البوست من المستخدم {post.owner_username}، لكن لم يتم العثور على أي ملفات."
+            return download_path, []
     except instaloader.exceptions.BadResponseException as e:
-        return f"حدث خطأ أثناء التحميل: قد يكون الرابط غير صالح أو قد تحتاج لتسجيل الدخول."
+        return None, f"حدث خطأ أثناء التحميل: قد يكون الرابط غير صالح أو قد تحتاج لتسجيل الدخول."
     except Exception as e:
-        return f"حدث خطأ أثناء التحميل: {str(e)}"
+        return None, f"حدث خطأ أثناء التحميل: {str(e)}"
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -31,7 +30,20 @@ def send_welcome(message):
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
     url = message.text
-    response = download_instagram_post(url)
-    bot.reply_to(message, response)
-
-bot.polling()
+    download_path, response = download_instagram_post(url)
+    if download_path:
+        for file in response:
+            file_path = os.path.join(download_path, file)
+            with open(file_path, 'rb') as f:
+                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+                    bot.send_photo(message.chat.id, f)
+                elif file.lower().endswith('.mp4'):
+                    bot.send_video(message.chat.id, f)
+                else:
+                    bot.send_document(message.chat.id, f)
+        # حذف الملفات بعد الرفع
+        for file in response:
+            os.remove(os.path.join(download_path, file))
+        os.rmdir(download_path)
+    else:
+       ​⬤
