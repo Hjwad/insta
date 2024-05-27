@@ -3,65 +3,65 @@ import requests
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import ChatAction
 from dotenv import load_dotenv
+import instaloader
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Instagram app credentials
-INSTAGRAM_APP_ID = os.getenv('INSTAGRAM_APP_ID')
-INSTAGRAM_APP_SECRET = os.getenv('INSTAGRAM_APP_SECRET')
+# Instagram API credentials
+INSTAGRAM_API_ID = os.getenv('INSTAGRAM_API_ID')
+INSTAGRAM_API_SECRET = os.getenv('INSTAGRAM_API_SECRET')
 
 # Bot token
-BOT_TOKEN = os.getenv('BOT_TOKEN')
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
-def start(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="مرحبا! أرسل اسم مستخدم Instagram لبدء التحميل.")
+# Initialize Instaloader
+L = instaloader.Instaloader()
 
-def download_instagram_posts(update, context, username):
-    access_token = get_access_token()
-    if access_token:
-        url = f'https://graph.instagram.com/v12.0/{username}/media?access_token={access_token}'
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            for post in data['data']:
-                media_url = post['media_url']
-                context.bot.send_photo(chat_id=update.effective_chat.id, photo=media_url)
+def download_instagram_post(url):
+    try:
+        post_shortcode = url.split("/")[-2]
+        post = instaloader.Post.from_shortcode(L.context, post_shortcode)
+        download_path = f"./downloads/{post.owner_username}"
+        os.makedirs(download_path, exist_ok=True)
+        L.download_post(post, target=download_path)
+        files = os.listdir(download_path)
+        if files:
+            return download_path, files
         else:
-            context.bot.send_message(chat_id=update.effective_chat.id, text="حدث خطأ أثناء التحميل.")
+            return download_path, []
+    except instaloader.exceptions.BadResponseException as e:
+        return None, f"حدث خطأ أثناء التحميل: قد يكون الرابط غير صالح أو قد تحتاج لتسجيل الدخول."
+    except Exception as e:
+        return None, f"حدث خطأ أثناء التحميل: {str(e)}"
+
+# Initialize Telegram bot
+bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, "مرحباً! أرسل رابط Instagram لتحميل المحتوى.")
+
+@bot.message_handler(func=lambda message: True)
+def handle_message(message):
+    url = message.text
+    download_path, response = download_instagram_post(url)
+    if download_path:
+        for file in response:
+            file_path = os.path.join(download_path, file)
+            with open(file_path, 'rb') as f:
+                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+                    bot.send_photo(message.chat.id, f)
+                elif file.lower().endswith('.mp4'):
+                    bot.send_video(message.chat.id, f)
+                else:
+                    bot.send_document(message.chat.id, f)
+        # Delete files after uploading
+        for file in response:
+            os.remove(os.path.join(download_path, file))
+        os.rmdir(download_path)
     else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="حدث خطأ في المصادقة.")
+        bot.reply_to(message, response)
 
-def get_access_token():
-    url = f'https://graph.instagram.com/oauth/access_token?client_id={INSTAGRAM_APP_ID}&client_secret={INSTAGRAM_APP_SECRET}&grant_type=client_credentials'
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        return data['access_token']
-    else:
-        return None
-
-def instagram(update, context):
-    if context.args:
-        username = context.args[0]
-        context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
-        download_instagram_posts(update, context, username)
-    else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="الرجاء توفير اسم مستخدم Instagram.")
-
-def unknown(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="آسف، لا أفهم هذا الأمر.")
-
-def main():
-    updater = Updater(token=BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
-
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("instagram", instagram))
-    dp.add_handler(MessageHandler(Filters.command, unknown))
-
-    updater.start_polling()
-    updater.idle()
-
-if __name__ == '__main__':
-    main()
+# Start polling
+bot.polling()
