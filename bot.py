@@ -3,20 +3,21 @@ import requests
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import ChatAction
 from dotenv import load_dotenv
-# تحميل المتغيرات من ملف .env
+
+# Load environment variables from .env file
 load_dotenv()
 
-# معرف التطبيق ورمز العميل الخاصين بتطبيق Instagram
+# Instagram app credentials
 INSTAGRAM_APP_ID = os.getenv('INSTAGRAM_APP_ID')
 INSTAGRAM_APP_SECRET = os.getenv('INSTAGRAM_APP_SECRET')
 
-# تعويض هنا بمعرف البوت الخاص بك
+# Bot token
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text="مرحبا! أرسل اسم مستخدم Instagram لبدء التحميل.")
 
-def download_instagram_posts(username):
+def download_instagram_posts(update, context, username):
     access_token = get_access_token()
     if access_token:
         url = f'https://graph.instagram.com/v12.0/{username}/media?access_token={access_token}'
@@ -41,9 +42,12 @@ def get_access_token():
         return None
 
 def instagram(update, context):
-    username = context.args[0]
-    context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
-    download_instagram_posts(username)
+    if context.args:
+        username = context.args[0]
+        context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+        download_instagram_posts(update, context, username)
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="الرجاء توفير اسم مستخدم Instagram.")
 
 def unknown(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text="آسف، لا أفهم هذا الأمر.")
