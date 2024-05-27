@@ -4,14 +4,21 @@ import os
 
 API_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 bot = telebot.TeleBot(API_TOKEN)
+
 L = instaloader.Instaloader()
 
 def download_instagram_post(url):
     try:
         post_shortcode = url.split("/")[-2]
         post = instaloader.Post.from_shortcode(L.context, post_shortcode)
-        L.download_post(post, target=f"./downloads/{post.owner_username}")
-        return f"تم تحميل البوست من المستخدم {post.owner_username}."
+        download_path = f"./downloads/{post.owner_username}"
+        os.makedirs(download_path, exist_ok=True)
+        L.download_post(post, target=download_path)
+        files = os.listdir(download_path)
+        if files:
+            return f"تم تحميل البوست من المستخدم {post.owner_username}.\nالمحتوى:\n" + "\n".join(files)
+        else:
+            return f"تم تحميل البوست من المستخدم {post.owner_username}، لكن لم يتم العثور على أي ملفات."
     except instaloader.exceptions.BadResponseException as e:
         return f"حدث خطأ أثناء التحميل: قد يكون الرابط غير صالح أو قد تحتاج لتسجيل الدخول."
     except Exception as e:
