@@ -46,4 +46,6 @@ def handle_message(message):
             os.remove(os.path.join(download_path, file))
         os.rmdir(download_path)
     else:
-       ​⬤
+        bot.reply_to(message, response)
+
+bot.polling()
