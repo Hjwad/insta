@@ -1,14 +1,18 @@
+import os
 import requests
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import ChatAction
-import json
+from dotenv import load_dotenv
+
+# تحميل المتغيرات من ملف .env
+load_dotenv()
 
 # معرف التطبيق ورمز العميل الخاصين بتطبيق Instagram
-INSTAGRAM_APP_ID = 'YOUR_INSTAGRAM_APP_ID'
-INSTAGRAM_APP_SECRET = 'YOUR_INSTAGRAM_APP_SECRET'
+INSTAGRAM_APP_ID = os.getenv('INSTAGRAM_APP_ID')
+INSTAGRAM_APP_SECRET = os.getenv('INSTAGRAM_APP_SECRET')
 
 # تعويض هنا بمعرف البوت الخاص بك
-BOT_TOKEN = 'YOUR_BOT_TOKEN'
+BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text="مرحبا! أرسل اسم مستخدم Instagram لبدء التحميل.")
