@@ -1,0 +1,17 @@
+{
+  "name": "instagram-downloader-bot",
+  "description": "A Telegram bot to download content from Instagram posts, stories, and reels.",
+  "repository": "https://github.com/username/instagram-downloader-bot",
+  "keywords": ["telegram", "bot", "instagram", "downloader"],
+  "env": {
+    "TELEGRAM_BOT_TOKEN": {
+      "description": "The API token for your Telegram bot",
+      "required": true
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
+}
