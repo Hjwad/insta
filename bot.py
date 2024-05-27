@@ -4,6 +4,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import ChatAction
 from dotenv import load_dotenv
 import instaloader
+import telebot
 
 # Load environment variables from .env file
 load_dotenv()
