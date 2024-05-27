@@ -3,7 +3,7 @@ import requests
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import ChatAction
 from dotenv import load_dotenv
-
+pip freeze > requirements.txt
 # تحميل المتغيرات من ملف .env
 load_dotenv()
 
