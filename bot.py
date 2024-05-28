@@ -3,22 +3,26 @@ import requests
 from dotenv import load_dotenv
 import instaloader
 import telebot
-from telethon.sync import TelegramClient
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Instagram API credentials
-INSTAGRAM_API_ID = os.getenv('INSTAGRAM_API_ID')
-INSTAGRAM_API_SECRET = os.getenv('INSTAGRAM_API_SECRET')
+# Instagram credentials
+INSTAGRAM_USERNAME = os.getenv('INSTAGRAM_USERNAME')
+INSTAGRAM_PASSWORD = os.getenv('INSTAGRAM_PASSWORD')
 
-# Telegram credentials
+# Telegram bot token
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-TELEGRAM_API_ID = os.getenv('TELEGRAM_API_ID')
-TELEGRAM_API_HASH = os.getenv('TELEGRAM_API_HASH')
 
 # Initialize Instaloader
 L = instaloader.Instaloader()
+
+# Log in to Instagram
+try:
+    L.login(INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD)
+except instaloader.exceptions.ConnectionException as e:
+    print(f"Failed to login to Instagram: {e}")
+    exit(1)
 
 def download_instagram_post(url):
     try:
@@ -64,9 +68,6 @@ def handle_message(message):
         os.rmdir(download_path)
     else:
         bot.reply_to(message, response)
-
-# Initialize Telethon client
-client = TelegramClient('session_name', TELEGRAM_API_ID, TELEGRAM_API_HASH)
 
 # Start polling
 bot.polling()
