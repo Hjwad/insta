@@ -1,7 +1,5 @@
 import os
 import requests
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from telegram import ChatAction
 from dotenv import load_dotenv
 import instaloader
 import telebot
