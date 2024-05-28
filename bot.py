@@ -3,6 +3,7 @@ import requests
 from dotenv import load_dotenv
 import instaloader
 import telebot
+from telethon.sync import TelegramClient
 
 # Load environment variables from .env file
 load_dotenv()
@@ -11,8 +12,10 @@ load_dotenv()
 INSTAGRAM_API_ID = os.getenv('INSTAGRAM_API_ID')
 INSTAGRAM_API_SECRET = os.getenv('INSTAGRAM_API_SECRET')
 
-# Bot token
+# Telegram credentials
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TELEGRAM_API_ID = os.getenv('TELEGRAM_API_ID')
+TELEGRAM_API_HASH = os.getenv('TELEGRAM_API_HASH')
 
 # Initialize Instaloader
 L = instaloader.Instaloader()
@@ -61,6 +64,9 @@ def handle_message(message):
         os.rmdir(download_path)
     else:
         bot.reply_to(message, response)
+
+# Initialize Telethon client
+client = TelegramClient('session_name', TELEGRAM_API_ID, TELEGRAM_API_HASH)
 
 # Start polling
 bot.polling()
